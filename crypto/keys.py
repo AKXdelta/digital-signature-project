@@ -1,4 +1,4 @@
-from cryptography.hazmat.primitives.asymmetric import rsa, ec
+from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives import serialization
 import os
 
@@ -13,7 +13,6 @@ def generate_rsa_keys():
     )
     public_key = private_key.public_key()
 
-    # Sauvegarder clé privée
     with open(os.path.join(KEYS_DIR, 'rsa_private.pem'), 'wb') as f:
         f.write(private_key.private_bytes(
             encoding=serialization.Encoding.PEM,
@@ -21,7 +20,6 @@ def generate_rsa_keys():
             encryption_algorithm=serialization.NoEncryption()
         ))
 
-    # Sauvegarder clé publique
     with open(os.path.join(KEYS_DIR, 'rsa_public.pem'), 'wb') as f:
         f.write(public_key.public_bytes(
             encoding=serialization.Encoding.PEM,
@@ -29,33 +27,18 @@ def generate_rsa_keys():
         ))
 
     print("✅ RSA keys generated → keys/rsa_private.pem & rsa_public.pem")
+    return private_key, public_key
 
 
-def generate_ecdsa_keys():
-    private_key = ec.generate_private_key(ec.SECP256R1())
-    public_key = private_key.public_key()
-
-    with open(os.path.join(KEYS_DIR, 'ecdsa_private.pem'), 'wb') as f:
-        f.write(private_key.private_bytes(
-            encoding=serialization.Encoding.PEM,
-            format=serialization.PrivateFormat.PKCS8,
-            encryption_algorithm=serialization.NoEncryption()
-        ))
-
-    with open(os.path.join(KEYS_DIR, 'ecdsa_public.pem'), 'wb') as f:
-        f.write(public_key.public_bytes(
-            encoding=serialization.Encoding.PEM,
-            format=serialization.PublicFormat.SubjectPublicKeyInfo
-        ))
-
-    print("✅ ECDSA keys generated → keys/ecdsa_private.pem & ecdsa_public.pem")
-
-
-def load_private_key(path):
+def load_private_key(path=None):
+    if path is None:
+        path = os.path.join(KEYS_DIR, 'rsa_private.pem')
     with open(path, 'rb') as f:
         return serialization.load_pem_private_key(f.read(), password=None)
 
 
-def load_public_key(path):
+def load_public_key(path=None):
+    if path is None:
+        path = os.path.join(KEYS_DIR, 'rsa_public.pem')
     with open(path, 'rb') as f:
         return serialization.load_pem_public_key(f.read())
