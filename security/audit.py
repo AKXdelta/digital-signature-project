@@ -103,8 +103,9 @@ def sign_log(entry):
 
 def log_action(
         action,
-        document,
-        result):
+        document=None,
+        result=None,
+        **kwargs):
     """Log an action to the audit trail with error handling."""
     try:
         previous_hash = get_last_hash()
@@ -112,10 +113,15 @@ def log_action(
         entry = {
             "timestamp": datetime.utcnow().isoformat(),
             "action": action,
-            "document": document,
-            "result": result,
+            "document": document or kwargs.get('fichier'),
+            "result": result or kwargs.get('status'),
             "previous_hash": previous_hash
         }
+        
+        # Add any extra metadata
+        for key, value in kwargs.items():
+            if key not in entry and value is not None:
+                entry[key] = value
 
         entry["current_hash"] = compute_hash(entry)
 
@@ -134,12 +140,11 @@ def log_action(
             raise
 
         print(
-            f"[AUDIT] {action} -> {result}"
+            f"[AUDIT] {action} -> {entry.get('result', 'OK')}"
         )
 
     except Exception as e:
         print(f"❌ Error logging action: {e}")
-        raise
 
 
 def verify_log(entry):

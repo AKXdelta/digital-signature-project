@@ -10,7 +10,7 @@ def read_json(file_path):
         if not file_path.endswith(".json"):
             raise ValueError("Not a JSON file")
 
-        with open(file_path, "r", encoding="utf-8") as f:
+        with open(file_path, "r", encoding="utf-8-sig") as f:
             data = json.load(f)
         return data
     
