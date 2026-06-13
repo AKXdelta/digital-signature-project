@@ -1,4 +1,4 @@
-from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.primitives.asymmetric import rsa, ec
 from cryptography.hazmat.primitives import serialization
 import os
 
@@ -7,6 +7,7 @@ os.makedirs(KEYS_DIR, exist_ok=True)
 
 
 def generate_rsa_keys():
+    """Generate RSA 2048-bit key pair."""
     private_key = rsa.generate_private_key(
         public_exponent=65537,
         key_size=2048,
@@ -26,8 +27,43 @@ def generate_rsa_keys():
             format=serialization.PublicFormat.SubjectPublicKeyInfo
         ))
 
-    print("✅ RSA keys generated → keys/rsa_private.pem & rsa_public.pem")
+    print("✅ RSA 2048-bit keys generated → keys/rsa_private.pem & rsa_public.pem")
     return private_key, public_key
+
+
+def generate_ecdsa_keys():
+    """Generate ECDSA P-256 key pair."""
+    private_key = ec.generate_private_key(ec.SECP256R1())
+    public_key = private_key.public_key()
+
+    with open(os.path.join(KEYS_DIR, 'ecdsa_private.pem'), 'wb') as f:
+        f.write(private_key.private_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PrivateFormat.PKCS8,
+            encryption_algorithm=serialization.NoEncryption()
+        ))
+
+    with open(os.path.join(KEYS_DIR, 'ecdsa_public.pem'), 'wb') as f:
+        f.write(public_key.public_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PublicFormat.SubjectPublicKeyInfo
+        ))
+
+    print("✅ ECDSA P-256 keys generated → keys/ecdsa_private.pem & ecdsa_public.pem")
+    return private_key, public_key
+
+
+def generate_keys(algo="rsa", prefix="keys/ma_cle"):
+    """Generate cryptographic keys based on algorithm."""
+    try:
+        if algo.lower() == "rsa":
+            return generate_rsa_keys()
+        elif algo.lower() == "ecdsa":
+            return generate_ecdsa_keys()
+        else:
+            raise ValueError(f"Unsupported algorithm: {algo}. Use 'rsa' or 'ecdsa'")
+    except Exception as e:
+        raise RuntimeError(f"Key generation failed: {e}")
 
 
 def load_private_key(path=None):
