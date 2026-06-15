@@ -197,17 +197,38 @@ def verify(fichier, sig, key):
 def audit(fichier, show_all):
     """Affiche l'historique complet des opérations sur un document."""
     try:
-        from security.audit import show_audit
-        click.echo(f"\n  Audit trail pour : {fichier}\n")
-        show_audit(fichier, show_all=show_all)
+        from security.audit import verify_audit_file, LOG_FILE
+        import json
+        
+        click.echo(f"\n 🛡️ Vérification de l'intégrité du journal : ", nl=False)
+        if verify_audit_file():
+            click.secho("VALIDE (Chaîne de hashage intacte)", fg="green")
+        else:
+            click.secho("CORROMPU", fg="red")
+            
+        click.echo(f"📄 Entrées de l'Audit Trail global :\n")
+        
+        with open(LOG_FILE, "r", encoding="utf-8") as f:
+            for line in f:
+                if not line.strip():
+                    continue
+                entry = json.loads(line.strip())
+                
+                date = entry.get("timestamp", "Date inconnue")
+                action = entry.get("action", "ACTION")
+                user = entry.get("user", "système")
+                
+                # MODIFICATION ICI : On utilise la clé "document" qui existe dans le JSON
+                doc = entry.get("document", "Document inconnu")
+                
+                click.echo(f"  [{date}] {user} a exécuté : {action.upper()} sur {doc}")
+                    
     except ImportError as e:
         _module_missing(str(e))
     except FileNotFoundError:
-        click.secho("  Aucun historique trouvé pour ce fichier.", fg="yellow")
+        click.secho(" ⚠️ Aucun historique d'audit trouvé (le fichier est vide).", fg="yellow")
     except Exception as e:
         _error(f"Lecture de l'audit trail échouée : {e}")
-
-
 # ─────────────────────────────────────────────
 #  Helpers internes (affichage d'erreurs)
 # ─────────────────────────────────────────────
